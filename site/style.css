@@ -1,0 +1,311 @@
+/* Montréal métro delay tracker
+   Palette: cool concrete greys; the four line colours are the only saturated colour on the page. */
+:root {
+  --concrete: #e7e9ea;
+  --surface: #f6f7f7;
+  --ink: #1c2227;
+  --muted: #5b646b;
+  --rule: #c4cacd;
+  --heat-empty: #dde1e3;
+
+  --green: #008e4f;
+  --orange: #ef8122;
+  --yellow: #ffd200;
+  --blue: #0083c9;
+  /* text-safe shades of the line colours (contrast on the page background) */
+  --green-text: #007a44;
+  --orange-text: #b35900;
+  --yellow-text: #856a00;
+  --blue-text: #006ba6;
+
+  --font: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.375rem;
+  --step-2: 1.875rem;
+  --step-3: clamp(2.25rem, 5vw, 3.75rem);
+  --step-4: clamp(4.5rem, 16vw, 11rem);
+  --space: 1.5rem;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --concrete: #16191c;
+    --surface: #1f2428;
+    --ink: #e4e8ea;
+    --muted: #9aa3a9;
+    --rule: #353c42;
+    --heat-empty: #262c31;
+    --green-text: #2fbf7a;
+    --orange-text: #f59a4a;
+    --yellow-text: #ffd200;
+    --blue-text: #43a9e8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --concrete: #16191c;
+  --surface: #1f2428;
+  --ink: #e4e8ea;
+  --muted: #9aa3a9;
+  --rule: #353c42;
+    --heat-empty: #262c31;
+  --green-text: #2fbf7a;
+  --orange-text: #f59a4a;
+  --yellow-text: #ffd200;
+  --blue-text: #43a9e8;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--concrete);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--step-0);
+  line-height: 1.5;
+  font-variation-settings: "wdth" 100;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+.wrap { max-width: 68rem; margin-inline: auto; padding-inline: var(--space); }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---- Masthead ------------------------------------------------------------ */
+.masthead { padding-block: 3.5rem 1rem; }
+.masthead h1 {
+  margin: 0;
+  font-size: var(--step-3);
+  line-height: 1.02;
+  font-weight: 820;
+  font-variation-settings: "wdth" 118;
+  letter-spacing: -0.01em;
+}
+.lede { margin: 1rem 0 0; font-size: var(--step-1); line-height: 1.35; max-width: 38ch; }
+.freshness { margin: 0.75rem 0 0; color: var(--muted); font-size: var(--step--1); }
+
+/* ---- Inline selects: the sentence is the form ----------------------------- */
+.inline-pick {
+  font: inherit;
+  font-weight: 750;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid currentColor;
+  border-radius: 0;
+  padding: 0 1.1em 0 0.1em;
+  margin: 0;
+  appearance: none;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 0.35em top 58%, right 0.05em top 58%;
+  background-size: 0.3em 0.3em;
+  background-repeat: no-repeat;
+}
+.select-probe { position: absolute; visibility: hidden; white-space: pre; left: -9999px; top: 0; }
+.inline-pick option { color: var(--ink); background: var(--surface); font-weight: 400; }
+
+/* ---- Odds (hero) ---------------------------------------------------------- */
+.odds { padding-block: 2rem 3.5rem; }
+.sentence {
+  margin: 0;
+  font-size: var(--step-2);
+  line-height: 1.45;
+  max-width: 34ch;
+  font-variation-settings: "wdth" 96;
+}
+.answer { margin: 0.25rem 0 0; display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+.answer-figure {
+  font-size: var(--step-4);
+  line-height: 0.9;
+  font-weight: 850;
+  font-variation-settings: "wdth" 72;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--accent-text, var(--ink));
+  transition: color 0.2s;
+}
+.answer-unit { font-size: var(--step-2); font-variation-settings: "wdth" 96; }
+.answer-context { margin: 0.5rem 0 0; color: var(--muted); max-width: 60ch; }
+
+.heatmap-figure { margin: 2.5rem 0 0; }
+.heatmap {
+  display: grid;
+  grid-template-columns: 2.5rem repeat(var(--hours, 19), minmax(0, 1fr));
+  gap: 3px;
+  max-width: 52rem;
+}
+.heatmap .hm-label { font-size: var(--step--1); color: var(--muted); align-self: center; }
+.heatmap .hm-hour { text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: visible; }
+.hm-axis {
+  margin: 0.4rem 0 0; padding-left: 2.5rem; max-width: 52rem;
+  text-align: center; font-size: var(--step--1); font-weight: 650; color: var(--ink);
+}
+.heatmap button {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 3px;
+  padding: 0;
+  cursor: pointer;
+  background: var(--heat-empty);
+  position: relative;
+}
+.heatmap button::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: var(--accent, var(--ink));
+  opacity: var(--v, 0);
+}
+.heatmap button[aria-selected="true"] { outline: 3px solid var(--ink); outline-offset: 1px; z-index: 1; }
+.heatmap-figure figcaption { margin-top: 0.75rem; color: var(--muted); font-size: var(--step--1); max-width: 62ch; }
+
+/* ---- Section titles -------------------------------------------------------- */
+.section-title {
+  margin: 0 0 1.5rem;
+  font-size: var(--step-3);
+  font-weight: 820;
+  line-height: 1.05;
+  font-variation-settings: "wdth" 118;
+  display: flex; gap: 0.3em; flex-wrap: wrap; align-items: baseline;
+}
+.section-title .inline-pick { font-weight: 820; font-variation-settings: "wdth" 118; }
+.period-note { margin: -1rem 0 1.5rem; }
+
+/* ---- Month ----------------------------------------------------------------- */
+.month { padding-block: 3rem; border-top: 2px solid var(--ink); }
+.month-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem 2.5rem; }
+.month-block h3 { margin: 0; font-size: var(--step-1); font-weight: 750; line-height: 1.2; }
+.block-note { margin: 0.25rem 0 1rem; color: var(--muted); font-size: var(--step--1); max-width: 60ch; }
+
+.rank { list-style: none; margin: 0; padding: 0; }
+.rank li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.85rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--rule);
+}
+.rank li:first-child { border-top: 0; padding-top: 0.25rem; }
+.rank .rank-name { font-weight: 700; font-size: var(--step-1); line-height: 1.2; }
+.rank .rank-detail { grid-column: 2; color: var(--muted); font-size: var(--step--1); font-variant-numeric: tabular-nums; }
+.rank li:first-child .rank-name { font-size: var(--step-2); font-weight: 800; font-variation-settings: "wdth" 90; }
+.rank .station-lines { display: flex; gap: 0.2rem; align-items: center; min-width: 2.2rem; }
+.rank .station-lines .pastille { width: 1.05rem; height: 1.05rem; font-size: 0.62rem; }
+.rank .empty { color: var(--muted); border: 0; display: block; }
+
+.figures { margin: 0; display: grid; gap: 1.1rem; }
+.figures div { border-top: 1px solid var(--rule); padding-top: 0.75rem; }
+.figures div:first-child { border-top: 0; padding-top: 0.25rem; }
+.figures dt { color: var(--muted); font-size: var(--step--1); }
+.figures dd {
+  margin: 0;
+  font-size: var(--step-2);
+  font-weight: 800;
+  line-height: 1.1;
+  font-variation-settings: "wdth" 90;
+  font-variant-numeric: tabular-nums;
+}
+.figures dd small { display: block; font-size: var(--step--1); font-weight: 400; color: var(--muted); font-variation-settings: "wdth" 100; margin-top: 0.2rem; }
+
+/* ---- Pastilles: STM line roundels ---------------------------------------- */
+.pastille {
+  display: inline-grid; place-items: center;
+  width: 2rem; height: 2rem; border-radius: 50%;
+  font-weight: 800; font-size: 1rem; line-height: 1;
+  color: #fff; background: var(--c);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.pastille[data-line="yellow"] { color: #1c2227; }
+
+/* ---- Map ------------------------------------------------------------------- */
+.where { padding-block: 3rem; border-top: 2px solid var(--ink); }
+.where > .block-note { margin-top: -1rem; margin-bottom: 1.5rem; }
+.map-layout { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
+.map {
+  height: min(70vh, 38rem);
+  min-height: 24rem;
+  border-radius: 6px;
+  background: var(--surface);
+  z-index: 0;
+}
+.line-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.line-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 0.85rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+  border-radius: 6px;
+  border-left: 6px solid var(--c);
+  cursor: default;
+  transition: background 0.15s;
+}
+.line-card.is-active { background: color-mix(in srgb, var(--c) 14%, var(--surface)); }
+.line-card h3 { margin: 0; font-size: var(--step-0); font-weight: 750; align-self: center; }
+.line-card dl { grid-column: 1 / -1; margin: 0.6rem 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.line-card dt { font-size: 0.75rem; color: var(--muted); line-height: 1.25; }
+.line-card dd { margin: 0; font-weight: 750; font-variant-numeric: tabular-nums; }
+.line-card .worst { grid-column: 1 / -1; margin: 0.5rem 0 0; font-size: var(--step--1); color: var(--muted); }
+
+/* Leaflet tooltips in the page's voice */
+.leaflet-container { font-family: var(--font); background: var(--surface); }
+.leaflet-tooltip.delay-tip {
+  background: var(--surface); color: var(--ink);
+  border: 0; border-radius: 6px; padding: 0.75rem 0.9rem;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.18);
+  font-size: var(--step--1); line-height: 1.45;
+  white-space: normal; width: 16rem;
+}
+.leaflet-tooltip.delay-tip::before { display: none; }
+.delay-tip strong { display: block; font-size: var(--step-0); margin-bottom: 0.2rem; }
+.delay-tip .tip-row { display: flex; justify-content: space-between; gap: 1rem; font-variant-numeric: tabular-nums; }
+.delay-tip .tip-row span:last-child { font-weight: 700; }
+.delay-tip .tip-note { margin-top: 0.35rem; color: var(--muted); }
+.leaflet-control-attribution { font-size: 0.7rem; }
+
+/* ---- Colophon -------------------------------------------------------------- */
+.colophon { padding-block: 3rem 4rem; border-top: 2px solid var(--ink); color: var(--muted); }
+.colophon h2 { margin: 0 0 1rem; color: var(--ink); font-size: var(--step-1); font-weight: 750; }
+.colophon p { margin: 0 0 1rem; font-size: var(--step--1); }
+
+.load-error { padding: 1rem 1.25rem; border-left: 6px solid var(--orange); background: var(--surface); max-width: 60ch; }
+
+/* ---- Responsive ------------------------------------------------------------ */
+@media (max-width: 60rem) {
+  .month-grid { grid-template-columns: 1fr 1fr; }
+  .month-grid .network { grid-column: 1 / -1; }
+  .network .figures { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .network .figures div { border-top: 0; padding-top: 0.25rem; }
+  .map-layout { grid-template-columns: 1fr; }
+  .line-cards { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 40rem) {
+  :root { --space: 1.1rem; }
+  .masthead { padding-top: 2.25rem; }
+  .sentence { font-size: var(--step-1); }
+  .answer-unit { font-size: var(--step-1); }
+  .month-grid, .network .figures, .line-cards { grid-template-columns: 1fr; }
+  .heatmap { grid-template-columns: 2rem repeat(var(--hours, 19), minmax(0, 1fr)); gap: 2px; }
+  .heatmap .hm-hour { font-size: 0.65rem; }
+  .hm-axis { padding-left: 2rem; }
+  .map { height: 60vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

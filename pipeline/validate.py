@@ -74,10 +74,17 @@ def main() -> None:
 
     # --- stations ----------------------------------------------------------------
     latest = stats.get("monthly", [{}])[-1]
-    check(len(latest.get("top3_stations", [])) == 3,
-          f"latest month has {len(latest.get('top3_stations', []))} ranked stations (expected 3)")
+    n_top = len(latest.get("top3_stations", []))
+    check(n_top >= 1, "latest month has no ranked stations")
+    if n_top < 3:
+        warnings.append(f"only {n_top} station(s) had a delay in {latest.get('month')}")
+    years = [y["year"] for y in stats.get("yearly", [])]
+    check(bool(years) and years[-1] == stats.get("latest_month", "")[:4],
+          f"yearly table ends at {years[-1] if years else None}, expected {stats.get('latest_month', '')[:4]}")
     match = issues.get("station_match_pct")
     if GEO.exists():
+        check(all(st.get("lines") for st in stats.get("stations", [])),
+              "some stations have no line assigned (station index bug?)")
         check(len(stats.get("stations", [])) >= 20,
               f"only {len(stats.get('stations', []))} stations matched to the map (expected ~68)")
         if match is not None and match < 90:

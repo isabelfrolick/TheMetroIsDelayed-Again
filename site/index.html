@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The métro is delayed. Again. | Montréal métro delay tracker</title>
+  <meta name="description" content="How often, when and where Montréal's métro is delayed, from the STM's open incident data. Updated automatically.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚇</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..850&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap">
+      <h1>The métro is delayed. Again.</h1>
+      <p class="lede">How often Montréal's métro stops, when it happens and where, measured from the STM's own incident log.</p>
+      <p class="freshness" id="freshness">Loading data…</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Likelihood: the sentence is the control -->
+    <section class="odds wrap" aria-labelledby="odds-title">
+      <h2 id="odds-title" class="visually-hidden">Chance of a delay at a given time</h2>
+      <p class="sentence">
+        On a
+        <label class="visually-hidden" for="pick-day">Day of the week</label>
+        <select id="pick-day" class="inline-pick"></select>,
+        between
+        <label class="visually-hidden" for="pick-hour">Hour</label>
+        <select id="pick-hour" class="inline-pick"></select>,
+        <label class="visually-hidden" for="pick-line">Line</label>
+        <select id="pick-line" class="inline-pick"></select>
+        had a delay of <span data-min-delay>5</span> minutes or more under way on
+      </p>
+      <p class="answer" aria-live="polite">
+        <span class="answer-figure" id="odds-figure">–</span>
+        <span class="answer-unit">of days.</span>
+      </p>
+      <p class="answer-context" id="odds-context"></p>
+
+      <figure class="heatmap-figure">
+        <div class="heatmap" id="heatmap" role="grid" aria-label="Chance of a delay by day of the week and hour of the day"></div>
+        <p class="hm-axis" aria-hidden="true">Hour of the day</p>
+        <figcaption>
+          Rows are days of the week and columns are hours of the day, from 5:00 to midnight.
+          The darker a square, the more often a delay was under way during that hour.
+          Select a square to read it in the sentence above. <span id="window-note"></span>
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- Month in review -->
+    <section class="month wrap" aria-labelledby="month-title">
+      <h2 id="month-title" class="section-title">
+        <span>In</span>
+        <label class="visually-hidden" for="pick-month">Month, or all of the year</label>
+        <select id="pick-month" class="inline-pick"></select>
+        <label class="visually-hidden" for="pick-year">Year</label>
+        <select id="pick-year" class="inline-pick"></select>
+      </h2>
+      <p class="block-note period-note" id="period-note" hidden></p>
+      <div class="month-grid">
+        <div class="month-block">
+          <h3>Most delayed lines</h3>
+          <p class="block-note">Ranked by total minutes of delay.</p>
+          <ol class="rank" id="rank-lines"></ol>
+        </div>
+        <div class="month-block">
+          <h3>Stations with the most delays</h3>
+          <p class="block-note">Incidents at the station that stopped trains for <span data-min-delay>5</span> minutes or more.</p>
+          <ol class="rank" id="rank-stations"></ol>
+        </div>
+        <div class="month-block network">
+          <h3>Across the network</h3>
+          <dl class="figures" id="network"></dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map -->
+    <section class="where wrap" aria-labelledby="map-title">
+      <h2 id="map-title" class="section-title">Line by line</h2>
+      <p class="block-note">The last 24 months. Point at a line for its record. Larger circles mark stations with more delays; rings mark the top three stations for the period chosen above.</p>
+      <div class="map-layout">
+        <div id="map" class="map" aria-label="Map of the Montréal métro lines"></div>
+        <ul class="line-cards" id="line-cards"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon wrap" id="method">
+    <h2>How this is measured</h2>
+    <p>
+      Data comes from the STM's <a href="https://donnees.montreal.ca/dataset/incidents-du-reseau-du-metro">métro incident log</a>
+      on Montréal's open data portal. Each week a GitHub Action downloads it, adds new incidents to a stored history, recomputes
+      these figures and republishes the page.
+    </p>
+    <p>
+      A <strong>delay</strong> is a train incident that interrupted service for <span data-min-delay>5</span> minutes or more,
+      timed from the start of the incident to the resumption of service. The STM leaves shorter interruptions out of its own
+      reliability figures. An incident that affected several lines counts once for each line, and once in network totals.
+      The chance of a delay is the share of past days on which a delay was under way at some point in that hour.
+      Station rankings count delays recorded at a station between 5:00 and 1:00; incidents between stations
+      (recorded as track sections) count toward their line but not toward any station. Yearly figures cover the months
+      published so far.
+    </p>
+    <p>
+      The STM publishes incidents after a lag, so the latest month shown may be a few months behind today.
+      Built with Python, pandas and Leaflet. Map data © OpenStreetMap contributors, © CARTO.
+    </p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -42,7 +42,7 @@ MAX_PLAUSIBLE = 12 * 60              # longer durations are treated as data erro
 WINDOW_MONTHS = 24                   # rolling window for hover stats + likelihood
 SERVICE_HOURS = list(range(5, 24))   # 05:00–23:59 slots (métro runs ~05:30–01:00)
 STATION_ACTIVE_HOURS = set(range(5, 24)) | {0}   # skip overnight work while the métro is closed
-STATION_RANK_BY = "incidents"        # or "delays" / "delay_min"
+STATION_RANK_BY = "delays"           # rank stations by delays they caused (or "incidents" / "delay_min")
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 LINES = {  # key: (label, French name, colour)
@@ -238,11 +238,11 @@ def load_station_index() -> dict:
                                                     "coords": f["geometry"]["coordinates"]})
         if e["name"].isupper() or e["name"] == display_name(p["name"]).title():
             e["name"] = display_name(p["name"])      # prefer a mixed-case spelling if any line has one
+        if p["line"] not in e["lines"]:
+            e["lines"].append(p["line"])
     for k, name in DISPLAY_OVERRIDES.items():
         if k in idx:
             idx[k]["name"] = name
-        if p["line"] not in e["lines"]:
-            e["lines"].append(p["line"])
     return idx
 
 
@@ -293,8 +293,10 @@ def rank_stations(g: pd.DataFrame, idx: dict, n: int | None = 3) -> list[dict]:
                   delays=("is_delay", "sum"), delay_min=("delay_min", "sum"))
              .sort_values([STATION_RANK_BY] + [c for c in ("incidents", "delays", "delay_min")
                                                if c != STATION_RANK_BY], ascending=False))
+    if n:  # rankings only list stations with something to rank (e.g. at least one delay)
+        agg = agg[agg[STATION_RANK_BY] > 0].head(n)
     out = []
-    for key, row in (agg.head(n) if n else agg).iterrows():
+    for key, row in agg.iterrows():
         info = idx.get(key, {})
         out.append({"key": key, "name": row["station"], "lines": info.get("lines", []),
                     "coords": info.get("coords"), "incidents": int(row["incidents"]),
@@ -388,21 +390,27 @@ def build_outputs(delays: pd.DataFrame, stations: pd.DataFrame, idx: dict,
         lines[k] = {"label": label, "name_fr": fr, "color": color,
                     **line_stats(win[win["line"] == k], int((slots["line"] == k).sum()), total_slots)}
 
-    # ---- monthly table over the full history (for the ranking selector) -----
-    monthly = []
-    st_by_month = dict(tuple(stations.groupby("month")))
-    for month, g in delays.groupby("month"):
+    # ---- monthly and yearly tables over the full history (for the period selector) --
+    def summarize(g: pd.DataFrame, sg: pd.DataFrame | None) -> dict:
         per = {}
         for k in LINES:
             gl = g[g["line"] == k]
             per[k] = {"incidents": int(len(gl)), "total_delay_min": int(gl["minutes"].sum()),
                       "avg_delay_min": r(gl["minutes"].mean())}
         top3 = sorted(LINES, key=lambda k: (-per[k]["total_delay_min"], -per[k]["incidents"]))[:3]
-        sg = st_by_month.get(month)
         gu = g.drop_duplicates("incident_id")       # a multi-line incident counts once network-wide
-        monthly.append({"month": month, "incidents": int(len(gu)),
-                        "avg_delay_min": r(gu["minutes"].mean()), "lines": per, "top3": top3,
-                        "top3_stations": rank_stations(sg, idx) if sg is not None else []})
+        return {"incidents": int(len(gu)), "avg_delay_min": r(gu["minutes"].mean()),
+                "total_delay_min": int(gu["minutes"].sum()), "lines": per, "top3": top3,
+                "top3_stations": rank_stations(sg, idx) if sg is not None and len(sg) else []}
+
+    st_by_month = dict(tuple(stations.groupby("month")))
+    monthly = [{"month": m, **summarize(g, st_by_month.get(m))} for m, g in delays.groupby("month")]
+
+    delays = delays.assign(year=delays["month"].str[:4])
+    stations = stations.assign(year=stations["month"].str[:4])
+    st_by_year = dict(tuple(stations.groupby("year")))
+    yearly = [{"year": y, "months": sorted(g["month"].unique().tolist()), **summarize(g, st_by_year.get(y))}
+              for y, g in delays.groupby("year")]
 
     win_u = win.drop_duplicates("incident_id")
     stats = {
@@ -420,6 +428,7 @@ def build_outputs(delays: pd.DataFrame, stations: pd.DataFrame, idx: dict,
         "stations": [x for x in rank_stations(st_win, idx, n=None) if x["coords"]],
         "station_rank_by": STATION_RANK_BY,
         "monthly": monthly,
+        "yearly": yearly,
     }
     return stats, likelihood, {"window": stats["window"], "latest_month": str(last_month)}
 
@@ -481,7 +490,7 @@ def main() -> None:
           f"{g['pct_hours_delayed_any_line']}% of service hours affected (any line)")
     last = stats["monthly"][-1]
     print(f"{last['month']}: top lines {last['top3']} | top stations "
-          f"{[(x['name'], x['incidents']) for x in last['top3_stations']]}")
+          f"{[(x['name'], x['delays']) for x in last['top3_stations']]} (delays)")
 
 
 if __name__ == "__main__":
