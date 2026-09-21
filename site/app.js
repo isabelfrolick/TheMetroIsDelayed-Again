@@ -122,9 +122,9 @@
     function render() {
       const line = lineSel.value, d = +daySel.value, i = +hourSel.value;
       const g = line === "any" ? lik.any : lik.lines[line];
-      const accent = line === "any" ? "var(--ink)" : `var(--${line})`;
+      const accent = `var(--${line})`;          // "any" maps to --any
       document.documentElement.style.setProperty("--accent", accent);
-      document.documentElement.style.setProperty("--accent-text", line === "any" ? "var(--ink)" : `var(--${line}-text)`);
+      document.documentElement.style.setProperty("--accent-text", `var(--${line}-text)`);
 
       const all = g.flat().filter((v) => v != null);
       const max = Math.max(...all, 0.01);
