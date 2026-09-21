@@ -140,9 +140,9 @@
       const v = g[d][i];
       $("#odds-figure").textContent = pct(v);
       const ratio = avg > 0 && v != null ? v / avg : null;
-      const lineName = line === "any" ? "the network" : `the ${stats.lines[line].label.toLowerCase()}`;
-      let ctx = `The average hour on ${lineName} comes in at ${pct(avg)}.`;
-      if (ratio != null && ratio >= 1.5) ctx += ` This hour is ${ratio.toFixed(1)} times as likely to be disrupted.`;
+      const lineName = line === "any" ? "the whole STM network" : `the ${stats.lines[line].label.toLowerCase()}`;
+      let ctx = `On ${lineName}, there is an average delay of ${pct(avg)}.`;
+      if (ratio != null && ratio >= 1.5) ctx += ` This hour is ${ratio.toFixed(1)} times more likely than average to be disrupted.`;
       else if (ratio != null && ratio <= 0.67) ctx += " This is one of the calmer hours.";
       $("#odds-context").textContent = ctx;
     }
@@ -185,7 +185,7 @@
       $("#rank-lines").innerHTML = p.top3.map((k) => {
         const l = p.lines[k];
         return `<li>${pastille(k)}<span class="rank-name">${esc(stats.lines[k].label)}</span>
-          <span class="rank-detail">${fmtInt.format(l.total_delay_min)} minutes over ${fmtInt.format(l.incidents)} delay${l.incidents === 1 ? "" : "s"}, ${l.avg_delay_min ?? "–"} min on average</span></li>`;
+          <span class="rank-detail">${fmtInt.format(l.total_delay_min)} minutes across ${fmtInt.format(l.incidents)} delay${l.incidents === 1 ? "" : "s"},<br> ${l.avg_delay_min ?? "–"} min on average</span></li>`;
       }).join("");
 
       $("#rank-stations").innerHTML = p.top3_stations.length
@@ -204,8 +204,8 @@
         : `${fmtInt.format(g.incidents)} over 24 months`;
       $("#network").innerHTML = `
         <div><dt>Average delay</dt><dd>${p.avg_delay_min ?? "–"} min<small>${vs}</small></dd></div>
-        <div><dt>Delays recorded</dt><dd>${fmtInt.format(p.incidents)}<small>${count}</small></dd></div>
-        <div><dt>Service hours with a delay somewhere</dt><dd>${(+g.pct_hours_delayed_any_line).toFixed(1)}%<small>Over 24 months, any line</small></dd></div>`;
+        <div><dt>Delays recorded in this period</dt><dd>${fmtInt.format(p.incidents)}<small>${count}</small></dd></div>
+        <div><dt>Service hours with a delay </dt><dd>${(+g.pct_hours_delayed_any_line).toFixed(1)}%<small>Over 24 months, any line</small></dd></div>`;
 
       listeners.forEach((fn) => fn(p));
     }
@@ -235,10 +235,10 @@
       li.innerHTML = `${pastille(k)}<h3>${esc(l.label)}</h3>
         <dl>
           <div><dt>Average delay</dt><dd>${l.avg_delay_min ?? "–"} min</dd></div>
-          <div><dt>Hours with a delay</dt><dd>${(+l.pct_hours_delayed).toFixed(1)}%</dd></div>
-          <div><dt>Delays</dt><dd>${fmtInt.format(l.incidents)}</dd></div>
+          <div><dt>Hours with at least one delay</dt><dd>${(+l.pct_hours_delayed).toFixed(1)}%</dd></div>
+          <div><dt># Delays</dt><dd>${fmtInt.format(l.incidents)}</dd></div>
         </dl>
-        ${l.worst ? `<p class="worst">Worst: ${l.worst.minutes} min on ${fmtDate(l.worst.date)}, ${esc(cause(l.worst.cause))}.</p>` : ""}`;
+        ${l.worst ? `<p class="worst">Worst: ${l.worst.minutes} min delay on ${fmtDate(l.worst.date)}. Cause: ${esc(cause(l.worst.cause))}.</p>` : ""}`;
       li.addEventListener("mouseenter", () => setActive(k));
       li.addEventListener("mouseleave", () => setActive(null));
       cards.appendChild(li);
