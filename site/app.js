@@ -290,9 +290,9 @@
     const ringLayer = L.layerGroup().addTo(map);
     stats.stations.forEach((s) => {
       if (!s.coords) return;
-      const r = 3 + 9 * Math.sqrt(s.delays / maxDelays);
+      const r = 2 + 4.5 * Math.sqrt(s.delays / maxDelays);
       L.circleMarker([s.coords[1], s.coords[0]], {
-        radius: r, weight: 2, color: css.getPropertyValue("--ink").trim(),
+        radius: r, weight: 1.5, color: css.getPropertyValue("--ink").trim(),
         fillColor: css.getPropertyValue("--surface").trim(), fillOpacity: 1,
       }).bindTooltip(`<strong>${esc(s.name)}</strong>
           <div class="tip-row"><span>Delays, 24 months</span><span>${fmtInt.format(s.delays)}</span></div>
@@ -317,8 +317,8 @@
           const s = stationsByKey.get(t.key) || t;
           if (!s.coords) return;
           L.circleMarker([s.coords[1], s.coords[0]], {
-            radius: 17 - i * 2, weight: 3, color: css.getPropertyValue("--ink").trim(),
-            fill: false, dashArray: i === 0 ? null : "4 4", interactive: false,
+            radius: 11 - i * 1.5, weight: 2, color: css.getPropertyValue("--ink").trim(),
+            fill: false, dashArray: i === 0 ? null : "3 3", interactive: false,
           }).addTo(ringLayer);
         });
       },
