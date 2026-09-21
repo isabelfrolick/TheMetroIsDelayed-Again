@@ -16,7 +16,7 @@
   <header class="masthead">
     <div class="wrap">
       <h1>The métro is delayed. Again.</h1>
-      <p class="lede">How many times can the Montreal metro possibly be delayed in a single week? Will I ever make it anywhere on time? Does this only happen when I really need to go somewhere? Answering all these questions and more. Data pulled from the <a href="https://donnees.montreal.ca/dataset/incidents-du-reseau-du-metro" target="_blank" rel="noopener">STM métro incident data</a></p>
+      <p class="lede">How many times can the Montreal metro possibly be delayed in a single week? Will I ever make it anywhere on time? Does this only happen when I really need to go somewhere? Answering all these questions and more. Data pulled from the <a href="https://donnees.montreal.ca/dataset/incidents-du-reseau-du-metro" target="_blank" rel="noopener">STM métro incident data.</a></p>
       <p class="freshness" id="freshness">Loading data…</p>
     </div>
   </header>
@@ -34,7 +34,7 @@
         <select id="pick-hour" class="inline-pick"></select>,
         <label class="visually-hidden" for="pick-line">Line</label>
         <select id="pick-line" class="inline-pick"></select>
-        had a delay of <span data-min-delay>5</span> minutes or more
+        had a delay of <span data-min-delay>5</span> minutes or more on
       </p>
       <p class="answer" aria-live="polite">
         <span class="answer-figure" id="odds-figure">–</span>
@@ -84,8 +84,9 @@
     <!-- Map -->
     <section class="where wrap" aria-labelledby="map-title">
       <h2 id="map-title" class="section-title">Map View</h2>
-      <p class="block-note">Data for the last 24 months. Larger circles mark stations with more delays. \n The ringed stations are the top three stations indicated for the period chosen above.</p>
-      <div class="map-layout">
+      <p class="block-note">Data for the last 24 months. Larger circles mark stations with more delays.<br>
+      The ringed stations are the top three stations for the period chosen above.</p>
+         <div class="map-layout">
         <div id="map" class="map" aria-label="Map of the Montréal métro lines"></div>
         <ul class="line-cards" id="line-cards"></ul>
       </div>
